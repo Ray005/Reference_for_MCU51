@@ -11,13 +11,13 @@ S01 专用
 
 注意：这里的LED是共阳极的，所以引脚为低电平时，LED亮。
 
-![1609934054026.png](images\1609934054026.png)
+![1609934054026.png](https://github.com/Ray005/Reference_for_MCU51/blob/main/images/1609934054026.png)
 
 ### 软件部分：100ms延时函数的获取
 
 本代码使用的是在STC-ISP软件中可以找到的，适用于本单片机
 
-![1609935009263.png](images\1609935009263.png)
+![1609935009263.png](https://github.com/Ray005/Reference_for_MCU51/blob/main/images/1609935009263.png)
 
 * 注意：这是按照时钟周期来进行”精确“延时的
 
@@ -35,7 +35,7 @@ S01 专用
 
 P00~P07为高时，段亮
 
-![1609933422966.png](images\1609933422966.png)
+![1609933422966.png](https://github.com/Ray005/Reference_for_MCU51/blob/main/images/1609933422966.png)
 
 * 段选：段选表示一个数字的八个段，本实验使用开发板为通过P00到P07通过74HC245锁存器来选择一个数字哪**几个**段亮
 * 位选：位选表示选择哪一个数字亮，本开发板中，通过P22~P24再经过74HC138译码器来选择哪**一个**数字亮
@@ -65,7 +65,7 @@ u8 code smgduan[17]={0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,
   * 四、重启你的单片机（按单片机的电源开关）
 
 
-![1609935153634.png](images\1609935153634.png)
+![1609935153634.png](https://github.com/Ray005/Reference_for_MCU51/blob/main/images/1609935153634.png)
 
 
 Created by Han@NUC
