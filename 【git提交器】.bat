@@ -1,7 +1,10 @@
 @echo off
 
-echo git push提交程序V1.0。包含以下命令：git add、git commit、git push\n                                                                                                                         
-set /p pro="请输入提交信息（不能含有空格，并使用【方括号】包含你的信息）："
+echo 【Info】git提交器V1.0。
+echo 【Info】使用以下命令：git add、git commit、git push
+echo 【Info】任意git工程初始化、链接远程库过后，将他放置在git工程下即可使用(本文件须为GBK编码) 。
+echo 【Info】Coded by Han@NUC                                                                                                                        
+set /p pro="【Input】请输入提交信息（不能含有空格，并使用【方括号】包含你的信息）："
 set da1=%date:~0,4%
 set da2=%date:~-8,-6%
 set da3=%date:~-5,-3%
@@ -36,6 +39,6 @@ git add *
 git commit -m %da1%%da2%%da3%%pro%
 
 git push
-echo git push完成
-echo %da1%%da2%%da3%%pro%
+echo 【Info】git push完成
+echo 【Info】%da1%%da2%%da3%%pro%
 pause
