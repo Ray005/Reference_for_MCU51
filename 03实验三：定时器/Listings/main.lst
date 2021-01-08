@@ -1,0 +1,343 @@
+C51 COMPILER V9.01   MAIN                                                                  01/08/2021 10:01:16 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main
+                    -.lst) TABS(2)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          #define GPIO_DIG P0
+   3          #define GPIO_KEY P1
+   4          
+   5          sbit LSA=P2^2;
+   6          sbit LSB=P2^3;
+   7          sbit LSC=P2^4;
+   8          sbit LED_const = P2^1;
+   9          
+  10          
+  11          unsigned char KeyValue; //用来存放读取到的键值
+  12          
+  13          
+  14          unsigned char code smgduan[17]={0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,
+  15                    0x80,0x90,0x88,0x83,0xc6,0xa1,0x86,0x8e};//显示0~F的值
+  16          
+  17          
+  18          sbit moto_pos = P1^0;
+  19          //sbit moto_neg = P1^1;
+  20          sbit k1 = P3^1;
+  21          sbit k2 = P3^0;
+  22          sbit k3 = P3^2;
+  23          sbit k4 = P3^3;
+  24          sbit led = P2^0;
+  25          
+  26          unsigned char TL0_ON ,TH0_ON,TL0_OFF,TH0_OFF;//u16
+  27          unsigned char key_val;
+  28          unsigned char speed = 1,speed_old;
+  29          unsigned int  counter = 0xFFF0,counter_OFF = 0xFFF0;
+  30          unsigned char mode = 1;
+  31          
+  32          void Delay1ms()   //@11.0592MHz
+  33          {
+  34   1        unsigned char i, j;
+  35   1      
+  36   1        //_nop_();
+  37   1        i = 2;
+  38   1        j = 199;
+  39   1        do
+  40   1        {
+  41   2          while (--j);
+  42   2        } while (--i);
+  43   1      }
+  44          
+  45          void Delay10us()    //@11.0592MHz
+  46          {
+  47   1        unsigned char i;
+  48   1      
+  49   1        i = 2;
+  50   1        while (--i);
+  51   1      }
+  52          
+  53          void delayus(long x){
+  54   1      int i;
+C51 COMPILER V9.01   MAIN                                                                  01/08/2021 10:01:16 PAGE 2   
+
+  55   1        for(i = 0; i < x/10; i++){
+  56   2        Delay10us();
+  57   2        }
+  58   1      }
+  59          
+  60          void delay(long x){
+  61   1        int i;
+  62   1        for(i = 0; i < x ; i++){
+  63   2        Delay1ms();
+  64   2        }
+  65   1      }
+  66          
+  67          
+  68          
+  69          int keypros()
+  70          {
+  71   1        if(k1==0)     //检测按键K1是否按下
+  72   1        { //k1 = 1;
+  73   2          delay(10);   //消除抖动 一般大约10ms
+  74   2          if(k1==0)  //再次判断按键是否按下
+  75   2          { while(!k1);
+  76   3            return 1;   
+  77   3          }
+  78   2          
+  79   2        }
+  80   1          
+  81   1        
+  82   1          if(k2==0)     //检测按键K1是否按下
+  83   1        { //k2 = 1;
+  84   2          delay(10);   //消除抖动 一般大约10ms
+  85   2          if(k2==0)  //再次判断按键是否按下
+  86   2          { 
+  87   3            while(!k2)delay(10);
+  88   3            return 2;   //led状态取反
+  89   3          }
+  90   2        }
+  91   1        
+  92   1        
+  93   1          if(k3==0)     //检测按键K1是否按下
+  94   1        { 
+  95   2          delay(10);   //消除抖动 一般大约10ms
+  96   2          if(k3==0)  //再次判断按键是否按下
+  97   2          {
+  98   3            while(!k3);
+  99   3            return 3;   //led状态取反
+ 100   3          }
+ 101   2          
+ 102   2        }
+ 103   1        
+ 104   1        
+ 105   1          if(k4==0)     //检测按键K1是否按下
+ 106   1        { 
+ 107   2          delay(10);   //消除抖动 一般大约10ms
+ 108   2          if(k4==0)  //再次判断按键是否按下
+ 109   2          {
+ 110   3            while(!k4);
+ 111   3            return 4;   //led状态取反
+ 112   3          }
+ 113   2          while(!k4);
+ 114   2        }
+ 115   1        
+ 116   1        return -1;
+C51 COMPILER V9.01   MAIN                                                                  01/08/2021 10:01:16 PAGE 3   
+
+ 117   1      }
+ 118          
+ 119          void moto_turn(int turn){
+ 120   1        if(turn == 0){
+ 121   2        moto_pos = 1;
+ 122   2        }
+ 123   1        else {
+ 124   2        moto_pos = 0;
+ 125   2        }
+ 126   1        
+ 127   1      
+ 128   1      }
+ 129          
+ 130          unsigned int counterCul(float dutycycle){//1kHz
+ 131   1        return 65535-(int)(1000*dutycycle*11.0592/12.0);//pwm周期为1000us即1ms（1kHz）
+ 132   1      }
+ 133          
+ 134          void Timer0Init()
+ 135          {
+ 136   1        TMOD|=0X01;//选择为定时器0模式，工作方式1，仅用TR0打开启动。
+ 137   1      
+ 138   1        TH0=0XCD; //给定时器赋初值，定时1ms
+ 139   1        TL0=0XD4; 
+ 140   1        ET0=1;//打开定时器0中断允许
+ 141   1        EA=1;//打开总中断
+ 142   1        TR0=1;//打开定时器      
+ 143   1      }
+ 144          
+ 145          void weixuan(int i){
+ 146   1      switch(i)  //位选，选择点亮的数码管，
+ 147   1          {
+ 148   2            case(0):
+ 149   2              LSA=1;LSB=1;LSC=1; break;//显示第7位
+ 150   2            case(1):
+ 151   2              LSA=0;LSB=1;LSC=1; break;//显示第6位
+ 152   2            case(2):
+ 153   2              LSA=1;LSB=0;LSC=1; break;//显示第5位
+ 154   2            case(3):
+ 155   2              LSA=0;LSB=0;LSC=1; break;//显示第4位
+ 156   2            case(4):
+ 157   2              LSA=1;LSB=1;LSC=0; break;//显示第3位 
+ 158   2            case(5):
+ 159   2              LSA=0;LSB=1;LSC=0; break;//显示第2位 
+ 160   2            case(6):
+ 161   2              LSA=1;LSB=0;LSC=0; break;//显示第1位 
+ 162   2            case(7):
+ 163   2              LSA=0;LSB=0;LSC=0; break;//显示第0位  
+ 164   2          }
+ 165   1        }
+ 166          
+ 167          
+ 168          void main(){
+ 169   1        Timer0Init();
+ 170   1        while(1){
+ 171   2        key_val = keypros();
+ 172   2        
+ 173   2          
+ 174   2          switch(key_val)
+ 175   2            {case 1:mode = 1; break;
+ 176   3            case 2: 
+ 177   3          if(speed<16){speed++;}
+ 178   3          else {speed = 16;}
+C51 COMPILER V9.01   MAIN                                                                  01/08/2021 10:01:16 PAGE 4   
+
+ 179   3          break;
+ 180   3          case 3: 
+ 181   3          if(speed>=1){speed--;}
+ 182   3          break;
+ 183   3          case 4:mode = 4;break;
+ 184   3            default :break;
+ 185   3          }
+ 186   2          if(speed != speed_old)
+ 187   2          {
+ 188   3          counter = counterCul(0.2 + speed/20.0);
+ 189   3          counter_OFF = 65535- (counter - 64613);
+ 190   3          TL0_ON = counter;
+ 191   3          TH0_ON = counter>>8;
+ 192   3          TL0_OFF = counter_OFF;
+ 193   3          TH0_OFF = counter_OFF>>8;
+ 194   3          //P2 = TL0_ON;
+ 195   3          speed_old = speed;
+ 196   3          }
+ 197   2          ////显示程序段
+ 198   2          if(mode ==1){
+ 199   3          weixuan(0);
+ 200   3          GPIO_DIG=0x6d;    //在第0位显示字母S
+ 201   3          delay(2);
+ 202   3          weixuan(1);
+ 203   3          GPIO_DIG=0x73;    //在第0位显示字母P
+ 204   3          delay(2);
+ 205   3          weixuan(2);
+ 206   3          GPIO_DIG=0x79;    //在第0位显示字母E
+ 207   3          delay(2);
+ 208   3          weixuan(3);
+ 209   3          GPIO_DIG=0x79;    //在第0位显示字母E
+ 210   3          delay(2);
+ 211   3          weixuan(4);
+ 212   3          GPIO_DIG=~smgduan[13];    //在第0位显示字母d
+ 213   3          delay(2);
+ 214   3          if(speed<10){               //在小于10的时候，在第3位显示按键序号数字
+ 215   4          weixuan(7);
+ 216   4          GPIO_DIG=~smgduan[speed];   
+ 217   4          delay(2);
+ 218   4          }
+ 219   3          
+ 220   3          if(speed>=10){
+ 221   4          weixuan(6);
+ 222   4          GPIO_DIG=~smgduan[1];   
+ 223   4          delay(2);
+ 224   4            
+ 225   4          weixuan(7);
+ 226   4          GPIO_DIG=~smgduan[speed-10];    
+ 227   4          delay(2);
+ 228   4          }   
+ 229   3        }
+ 230   2        
+ 231   2          if(mode ==4){
+ 232   3          int duty = (0.2 + speed/20.0)*100;  
+ 233   3            
+ 234   3          weixuan(0);
+ 235   3          GPIO_DIG=0x5e;    //在第0位显示字母d
+ 236   3          delay(2);
+ 237   3          weixuan(1);
+ 238   3          GPIO_DIG=0x3e;    //在第0位显示字母u
+ 239   3          delay(2);
+ 240   3          weixuan(2);
+C51 COMPILER V9.01   MAIN                                                                  01/08/2021 10:01:16 PAGE 5   
+
+ 241   3          GPIO_DIG=0x78;    //在第0位显示字母t
+ 242   3          delay(2);
+ 243   3          weixuan(3);
+ 244   3          GPIO_DIG=0x6e;    //在第0位显示字母y
+ 245   3          delay(2);
+ 246   3          
+ 247   3          if(duty < 100&& duty > 20){
+ 248   4          weixuan(6);
+ 249   4          GPIO_DIG=~smgduan[(int)(duty/10)];    
+ 250   4          delay(2);
+ 251   4            
+ 252   4          weixuan(7);
+ 253   4          GPIO_DIG=~smgduan[(int)(duty%10)];    
+ 254   4          delay(2); 
+ 255   4          }
+ 256   3          else if(duty >= 100){
+ 257   4          weixuan(5);
+ 258   4          GPIO_DIG=~smgduan[1];   
+ 259   4          delay(2);
+ 260   4            
+ 261   4          weixuan(6);
+ 262   4          GPIO_DIG=~smgduan[0];   
+ 263   4          delay(2);
+ 264   4            
+ 265   4          weixuan(7);
+ 266   4          GPIO_DIG=~smgduan[0];   
+ 267   4          delay(2); 
+ 268   4          }
+ 269   3          else {
+ 270   4          weixuan(4);
+ 271   4          GPIO_DIG=~smgduan[5];   //在第0位显示字母s
+ 272   4          delay(2);
+ 273   4          weixuan(5);
+ 274   4          GPIO_DIG=0x78;    //在第0位显示字母t
+ 275   4          delay(2);
+ 276   4          weixuan(6);
+ 277   4          GPIO_DIG=0x5c;    //在第0位显示字母o
+ 278   4          delay(2);
+ 279   4          weixuan(7);
+ 280   4          GPIO_DIG=0x73;    //在第0位显示字母p
+ 281   4          delay(2);
+ 282   4          }
+ 283   3          
+ 284   3        }
+ 285   2        
+ 286   2        }
+ 287   1      }
+ 288          
+ 289          void Timer0() interrupt 1
+ 290          {
+ 291   1        if(speed ==0 ){
+ 292   2        moto_pos = 1;
+ 293   2        }
+ 294   1        if(moto_pos == 0)
+ 295   1          {   
+ 296   2            P2 = P2 & 0x1C | 0x00;
+ 297   2              moto_pos = 1;        //设置高电平持续时间
+ 298   2              TH0 = TH0_ON;
+ 299   2              TL0 = TL0_ON;
+ 300   2      
+ 301   2          }
+ 302   1          else
+C51 COMPILER V9.01   MAIN                                                                  01/08/2021 10:01:16 PAGE 6   
+
+ 303   1          {   P2 = P2 & 0x1C | 0xE3;
+ 304   2              moto_pos = 0;        //设置低电平持续时间         
+ 305   2            TH0 = TH0_OFF;
+ 306   2            TL0 = TL0_OFF;
+ 307   2          }
+ 308   1      }
+ 309            
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    998    ----
+   CONSTANT SIZE    =     17    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     13      16
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

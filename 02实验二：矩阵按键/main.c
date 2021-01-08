@@ -1,14 +1,5 @@
-/*************************************************************************************
 
-*
-实验现象：下载程序后数码管显示0，按下矩阵按键上的按键显示对应的数字
-		 
-注意事项：										
 
-										  
-**************************************************************************************
-
-*/
 #include "reg52.h"			 //此文件中定义了单片机的一些特殊功能寄存器
 
 typedef unsigned int u16;	  //对数据类型进行声明定义
@@ -17,6 +8,11 @@ typedef unsigned char u8;
 #define GPIO_DIG P0
 #define GPIO_KEY P1
 
+sbit LSA=P2^2;
+sbit LSB=P2^3;
+sbit LSC=P2^4;
+sbit LED_const = P2^1;
+
 
 u8 KeyValue;	//用来存放读取到的键值
 
@@ -24,28 +20,50 @@ u8 KeyValue;	//用来存放读取到的键值
 u8 code smgduan[17]={0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,
 					0x80,0x90,0x88,0x83,0xc6,0xa1,0x86,0x8e};//显示0~F的值
 
-/*******************************************************************************
-* 函 数 名         : delay
-* 函数功能		   : 延时函数，i=1时，大约延时10us
-*******************************************************************************/
-void delay(u16 i)
+
+void Delay1ms()		//@11.0592MHz
 {
-	while(i--);	
+	unsigned char i, j;
+
+	//_nop_();
+	i = 2;
+	j = 199;
+	do
+	{
+		while (--j);
+	} while (--i);
 }
 
-/*******************************************************************************
-* 函 数 名         : KeyDown
-* 函数功能		   : 检测有按键按下并读取键值
-* 输    入         : 无
-* 输    出         : 无
-*******************************************************************************/
-void KeyDown(void)
+void Delay10us()		//@11.0592MHz
+{
+	unsigned char i;
+
+	i = 2;
+	while (--i);
+}
+
+void delayus(long x){
+int i;
+	for(i = 0; i < x/10; i++){
+	Delay10us();
+	}
+}
+
+void delay(long x){
+	int i;
+	for(i = 0; i < x ; i++){
+	Delay1ms();
+	} 
+}
+
+
+u8 KeyDown(void)
 {
 	char a=0;
 	GPIO_KEY=0x0f;
 	if(GPIO_KEY!=0x0f)//读取按键是否按下
 	{
-		delay(1000);//延时10ms进行消抖
+		delay(1);//延时10ms进行消抖
 		if(GPIO_KEY!=0x0f)//再次检测键盘是否按下
 		{	
 			//测试列
@@ -69,26 +87,79 @@ void KeyDown(void)
 			
 		}
 	}
-	while((a<50)&&(GPIO_KEY!=0xf0))	 //检测按键松手检测
+	/*while((a<50)&&(GPIO_KEY!=0xf0))	 //检测按键松手检测
 	{
-		delay(100);
+		delay(10);
 		a++;
-	}
+	}*/
+	return KeyValue;
 }
+void weixuan(int i){
+switch(i)	 //位选，选择点亮的数码管，
+		{
+			case(0):
+				LSA=1;LSB=1;LSC=1; break;//显示第7位
+			case(1):
+				LSA=0;LSB=1;LSC=1; break;//显示第6位
+			case(2):
+				LSA=1;LSB=0;LSC=1; break;//显示第5位
+			case(3):
+				LSA=0;LSB=0;LSC=1; break;//显示第4位
+			case(4):
+				LSA=1;LSB=1;LSC=0; break;//显示第3位 
+			case(5):
+				LSA=0;LSB=1;LSC=0; break;//显示第2位 
+			case(6):
+				LSA=1;LSB=0;LSC=0; break;//显示第1位 
+			case(7):
+				LSA=0;LSB=0;LSC=0; break;//显示第0位	
+		}
+	}
 
-
-/*******************************************************************************
-* 函 数 名       : main
-* 函数功能		 : 主函数
-* 输    入       : 无
-* 输    出    	 : 无
-*******************************************************************************/
 void main()
 {	
-
+	int k;
+	int a = 0;
+	//LED_const = 1;
 	while(1)
 	{	
-		KeyDown();		   //按键判断函数
-		GPIO_DIG=~smgduan[KeyValue];	  //
+		k = KeyDown();		   //按键判断函数
+		
+		weixuan(0);
+		GPIO_DIG=0x6d;	  //在第0位显示字母S
+		delay(2);
+		weixuan(1);
+		GPIO_DIG=0x73;	  //在第0位显示字母P
+		delay(2);
+		weixuan(2);
+		GPIO_DIG=0x79;	  //在第0位显示字母E
+		delay(2);
+		weixuan(3);
+		GPIO_DIG=0x79;	  //在第0位显示字母E
+		delay(2);
+		weixuan(4);
+		GPIO_DIG=~smgduan[13];	  //在第0位显示字母d
+		delay(2);
+		if(k<10){								//在小于10的时候，在第3位显示按键序号数字
+	  weixuan(7);
+		GPIO_DIG=~smgduan[k];	  
+		delay(2);
+		}
+		
+		if(k>=10){
+		weixuan(6);
+		GPIO_DIG=~smgduan[1];	  
+		delay(2);
+			
+		weixuan(7);
+		GPIO_DIG=~smgduan[k-10];	  
+		delay(1);
+		}
+
+			P2 = P2 & 0x1C | 0x00;        //熄灭LED  
+   		delayus((k)*5);
+
+   		P2 = P2 & 0x1C | 0xE3;        //点亮LED
+  	  delayus((16-k)*5);
 	}		
 }

@@ -1,0 +1,212 @@
+C51 COMPILER V9.01   MAIN                                                                  01/08/2021 09:03:35 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main
+                    -.lst) TABS(2)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          
+   3          sbit moto_pos = P1^0;
+   4          //sbit moto_neg = P1^1;
+   5          sbit k1 = P3^1;
+   6          sbit k2 = P3^0;
+   7          sbit k3 = P3^2;
+   8          sbit k4 = P3^3;
+   9          sbit led = P2^0;
+  10          
+  11          unsigned char TL0_ON ,TH0_ON,TL0_OFF,TH0_OFF;//u16
+  12          unsigned char key_val;
+  13          unsigned char speed = 1,speed_old;
+  14          unsigned int  counter = 0xFFF0,counter_OFF = 0xFFF0;
+  15          
+  16          void Delay1ms()   //@11.0592MHz
+  17          {
+  18   1        unsigned char i, j;
+  19   1      
+  20   1        //_nop_();
+  21   1        i = 2;
+  22   1        j = 199;
+  23   1        do
+  24   1        {
+  25   2          while (--j);
+  26   2        } while (--i);
+  27   1      }
+  28          
+  29          void Delay10us()    //@11.0592MHz
+  30          {
+  31   1        unsigned char i;
+  32   1      
+  33   1        i = 2;
+  34   1        while (--i);
+  35   1      }
+  36          
+  37          void delayus(long x){
+  38   1      int i;
+  39   1        for(i = 0; i < x/10; i++){
+  40   2        Delay10us();
+  41   2        }
+  42   1      }
+  43          
+  44          void delay(long x){
+  45   1        int i;
+  46   1        for(i = 0; i < x ; i++){
+  47   2        Delay1ms();
+  48   2        }
+  49   1      }
+  50          
+  51          
+  52          
+  53          int keypros()
+  54          {
+C51 COMPILER V9.01   MAIN                                                                  01/08/2021 09:03:35 PAGE 2   
+
+  55   1        if(k1==0)     //检测按键K1是否按下
+  56   1        { //k1 = 1;
+  57   2          delay(10);   //消除抖动 一般大约10ms
+  58   2          if(k1==0)  //再次判断按键是否按下
+  59   2          { while(!k1);
+  60   3            return 1;   
+  61   3          }
+  62   2          
+  63   2        }
+  64   1          
+  65   1        
+  66   1          if(k2==0)     //检测按键K1是否按下
+  67   1        { //k2 = 1;
+  68   2          delay(10);   //消除抖动 一般大约10ms
+  69   2          if(k2==0)  //再次判断按键是否按下
+  70   2          { 
+  71   3            while(!k2)delay(10);
+  72   3            return 2;   //led状态取反
+  73   3          }
+  74   2        }
+  75   1        
+  76   1        
+  77   1          if(k3==0)     //检测按键K1是否按下
+  78   1        { 
+  79   2          delay(10);   //消除抖动 一般大约10ms
+  80   2          if(k3==0)  //再次判断按键是否按下
+  81   2          {
+  82   3            while(!k3);
+  83   3            return 3;   //led状态取反
+  84   3          }
+  85   2          
+  86   2        }
+  87   1        
+  88   1        
+  89   1          if(k4==0)     //检测按键K1是否按下
+  90   1        { 
+  91   2          delay(10);   //消除抖动 一般大约10ms
+  92   2          if(k4==0)  //再次判断按键是否按下
+  93   2          {
+  94   3            while(!k4);
+  95   3            return 4;   //led状态取反
+  96   3          }
+  97   2          while(!k4);
+  98   2        }
+  99   1        
+ 100   1        return -1;
+ 101   1      }
+ 102          
+ 103          void moto_turn(int turn){
+ 104   1        if(turn == 0){
+ 105   2        moto_pos = 1;
+ 106   2        }
+ 107   1        else {
+ 108   2        moto_pos = 0;
+ 109   2        }
+ 110   1        
+ 111   1      
+ 112   1      }
+ 113          
+ 114          unsigned int counterCul(float dutycycle){//1kHz
+ 115   1        return 65535-(int)(1000*dutycycle*11.0592/12.0);//pwm周期为1000us即1ms（1kHz）
+ 116   1      }
+C51 COMPILER V9.01   MAIN                                                                  01/08/2021 09:03:35 PAGE 3   
+
+ 117          
+ 118          void Timer0Init()
+ 119          {
+ 120   1        TMOD|=0X01;//选择为定时器0模式，工作方式1，仅用TR0打开启动。
+ 121   1      
+ 122   1        TH0=0XCD; //给定时器赋初值，定时1ms
+ 123   1        TL0=0XD4; 
+ 124   1        ET0=1;//打开定时器0中断允许
+ 125   1        EA=1;//打开总中断
+ 126   1        TR0=1;//打开定时器      
+ 127   1      }
+ 128          
+ 129          
+ 130          
+ 131          void main(){
+ 132   1        Timer0Init();
+ 133   1        while(1){
+ 134   2        key_val = keypros();
+ 135   2          switch(key_val)
+ 136   2          {case 2: 
+ 137   3          if(speed<10){speed++;}
+ 138   3          else {speed = 10;}
+ 139   3          break;
+ 140   3          case 3: 
+ 141   3          if(speed>1){speed--;}
+ 142   3          break;
+ 143   3            default :break;
+ 144   3          }
+ 145   2          if(speed != speed_old)
+ 146   2          {
+ 147   3          counter = counterCul(speed/10.0);
+ 148   3          counter_OFF = 65535- (counter - 64613);
+ 149   3          TL0_ON = counter;
+ 150   3          TH0_ON = counter>>8;
+ 151   3          TL0_OFF = counter_OFF;
+ 152   3          TH0_OFF = counter_OFF>>8;
+ 153   3          //P2 = TL0_ON;
+ 154   3          speed_old = speed;
+ 155   3          }
+ 156   2        }
+ 157   1      }
+ 158          
+ 159          void Timer0() interrupt 1
+ 160          {
+ 161   1        //static u16 i;
+ 162   1        //TH0=0XFC; //给定时器赋初值，定时1ms
+ 163   1        //TL0=0X18;
+ 164   1        if(moto_pos == 0)
+ 165   1          {   
+ 166   2            led = 0;
+ 167   2              moto_pos = 1;        //设置低电平持续时间，LED2亮
+ 168   2              TH0 = TH0_ON;
+ 169   2              TL0 = TL0_ON;
+ 170   2            //TH0=0XFC; //给定时器赋初值，定时1ms
+ 171   2            //TL0=0X18;
+ 172   2          }
+ 173   1          else
+ 174   1          {   led = 1;
+ 175   2              moto_pos = 0;        //设置高电平持续时间,LED2灭        
+ 176   2             //TH0=0XFC;  //给定时器赋初值，定时1ms
+ 177   2              //TL0=0X18; 
+ 178   2            TH0 = TH0_OFF;
+C51 COMPILER V9.01   MAIN                                                                  01/08/2021 09:03:35 PAGE 4   
+
+ 179   2            TL0 = TL0_OFF;
+ 180   2          }
+ 181   1      }
+ 182            
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    417    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     11      14
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
