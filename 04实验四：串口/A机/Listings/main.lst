@@ -1,0 +1,182 @@
+C51 COMPILER V9.01   MAIN                                                                  01/08/2021 22:32:13 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE USER\main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\USER) DEBUG OBJECTEXTEND P
+                    -RINT(.\Listings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          //A机器
+   2          #include "reg51.h"
+   3          #include "stdio.h"
+   4          #include "intrins.h"
+   5          #define LocalHost 0x41
+   6          //#include "uart.h"
+   7          
+   8          typedef unsigned int u16;   //对数据类型进行声明定义
+   9          typedef unsigned char u8;
+  10          
+  11          //--定义使用的IO口--//
+  12          sbit SRCLK=P3^6;
+  13          sbit RCLK=P3^5;
+  14          sbit SER=P3^4;
+  15          
+  16          
+  17          u8 ledduan[]={0x00,0x06,0x38,0xC8,0x68,0x18,0x06,0x00};/*"A",0*/
+  18          u8 ledwei[]={0x7f,0xbf,0xdf,0xef,0xf7,0xfb,0xfd,0xfe};  //类似于动态数码管的位选
+  19          unsigned char mech_step = 1;
+  20          unsigned char recv_commond = 0;
+  21          
+  22          void delay(long x){
+  23   1        int i;
+  24   1        for(i = 0; i < x ; i++){
+  25   2        unsigned char i, j;
+  26   2        i = 2;
+  27   2        j = 199;
+  28   2        do
+  29   2        {   while (--j);
+  30   3        } while (--i);
+  31   2        } 
+  32   1      }
+  33          
+  34          void UartInit(void)   //4800bps@11.0592MHz
+  35          {
+  36   1        PCON &= 0x7F;   //波特率不倍速
+  37   1        SCON = 0x50;    //8位数据,可变波特率
+  38   1        //AUXR &= 0xBF;   //定时器1时钟为Fosc/12,即12T
+  39   1        //AUXR &= 0xFE;   //串口1选择定时器1为波特率发生器
+  40   1        //stc中才有这个AUXR寄存器，没有的话，默认选定时器1、12T模式，再删去这一行即可
+  41   1        TMOD &= 0x0F;   //清除定时器1模式位
+  42   1        TMOD |= 0x20;   //设定定时器1为8位自动重装方式
+  43   1        TL1 = 0xFA;   //设定定时初值
+  44   1        TH1 = 0xFA;   //设定定时器重装值
+  45   1        ET1 = 0;    //禁止定时器1中断
+  46   1        ES = 1;
+  47   1        EA = 1;
+  48   1        TR1 = 1;    //启动定时器1
+  49   1      }
+  50          
+  51          char putchar(char c){ //重写了putchar函数，在include stdio.h后就可以使用printf了
+  52   1        SBUF = c;
+  53   1        while(!TI);//Here，等待清除标志位，注意这里是阻塞的
+  54   1        TI = 0;
+C51 COMPILER V9.01   MAIN                                                                  01/08/2021 22:32:13 PAGE 2   
+
+  55   1        return c;
+  56   1      }
+  57          
+  58          
+  59          void delay2(u16 i)
+  60          {
+  61   1        while(i--); 
+  62   1      }
+  63          
+  64          void LED1(u8 dat1)
+  65          {
+  66   1        P0=dat1;
+  67   1      }
+  68          /*******************************************************************************
+  69          * 函 数 名         : Hc595SendByte(u8 dat1,u8 dat2)
+  70          * 函数功能       : 通过595发送2个字节的数据
+  71          * 输    入         : dat1：第2个595输出数值
+  72          *                  * dat2: 第1个595输出数值
+  73          * 输    出         : 无
+  74          *******************************************************************************/
+  75          void Hc595SendByte(u8 dat)
+  76          {
+  77   1        u8 a;
+  78   1      
+  79   1        SRCLK = 1;
+  80   1        RCLK = 1;
+  81   1      
+  82   1        for(a=0;a<8;a++)     //发送8位数
+  83   1        {
+  84   2          SER = dat >> 7;    //从最高位开始发送
+  85   2          dat <<= 1;
+  86   2      
+  87   2          SRCLK = 0;       //发送时序
+  88   2          _nop_();
+  89   2          _nop_();
+  90   2          SRCLK = 1;  
+  91   2        }
+  92   1        RCLK = 0;
+  93   1        _nop_();
+  94   1        _nop_();
+  95   1        RCLK = 1;
+  96   1      }
+  97          
+  98          
+  99          void main(){
+ 100   1        int i;
+ 101   1        UartInit();
+ 102   1        //printf("Haojie");
+ 103   1             
+ 104   1        while(1){
+ 105   2          for(i=0;i<8;i++)
+ 106   2           {
+ 107   3              Hc595SendByte(ledduan[i]);
+ 108   3             LED1(ledwei[i]);
+ 109   3            //delay2(10);     
+ 110   3           }
+ 111   2          if(recv_commond == '1'){
+ 112   3          P2 = 0x00;
+ 113   3          }
+ 114   2          else if(recv_commond == '0'){
+ 115   3          P2 = 0xFF;
+ 116   3          }
+C51 COMPILER V9.01   MAIN                                                                  01/08/2021 22:32:13 PAGE 3   
+
+ 117   2      
+ 118   2          
+ 119   2        }
+ 120   1      }
+ 121          
+ 122          void uart_ISR() interrupt 4
+ 123          {
+ 124   1        unsigned char recv_data;
+ 125   1        if(RI){
+ 126   2          RI = 0;
+ 127   2          recv_data = SBUF;
+ 128   2          switch(mech_step){
+ 129   3            case 1:{
+ 130   4            if(recv_data == '^'){
+ 131   5            mech_step = 2;
+ 132   5            }
+ 133   4            }break;
+ 134   3            case 2:{
+ 135   4            if(recv_data == LocalHost){
+ 136   5            mech_step = 3;  
+ 137   5            }
+ 138   4            else {
+ 139   5            mech_step = 1;
+ 140   5            }
+ 141   4            }break;
+ 142   3            case 3:{
+ 143   4            recv_commond = recv_data;
+ 144   4            mech_step = 1;  //接收完毕
+ 145   4              //if(recv_commond == '1')
+ 146   4                {
+ 147   5              printf("【0x41】从机A应答！\r\n");
+ 148   5              }
+ 149   4            }break;
+ 150   3            default :break;
+ 151   3          }
+ 152   2      
+ 153   2        }
+ 154   1      } 
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    304    ----
+   CONSTANT SIZE    =     22    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     18       6
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
