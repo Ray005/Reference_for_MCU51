@@ -1,0 +1,189 @@
+C51 COMPILER V9.01   DISP                                                                  01/13/2021 22:44:22 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE DISP
+OBJECT MODULE PLACED IN disp.OBJ
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE disp.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\05大实验) DEBUG OBJECTEXTEND P
+                    -RINT(.\Listings\disp.lst) TABS(2)
+
+line level    source
+
+   1          #include "disp.h"
+   2          #include "delay.h"
+   3          
+   4          
+   5          extern unsigned char DisplayData[5];
+   6          unsigned char code smgduan[17]={0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,
+   7                    0x80,0x90,0x88,0x83,0xc6,0xa1,0x86,0x8e};//显示0~F的值
+   8          
+   9          void display_smg(){
+  10   1          ////显示程序段
+  11   1          if(mode ==1){
+  12   2          weixuan(0);
+  13   2          GPIO_DIG=0x6d;    //在第0位显示字母S
+  14   2          delay(1);
+  15   2          weixuan(1);
+  16   2          GPIO_DIG=0x73;    //在第0位显示字母P
+  17   2          delay(1);
+  18   2          weixuan(2);
+  19   2          GPIO_DIG=0x79;    //在第0位显示字母E
+  20   2          delay(1);
+  21   2          weixuan(3);
+  22   2          GPIO_DIG=0x79;    //在第0位显示字母E
+  23   2          delay(1);
+  24   2          weixuan(4);
+  25   2          GPIO_DIG=~smgduan[13];    //在第0位显示字母d
+  26   2          delay(1);
+  27   2          if(speed<10){               //在小于10的时候，在第3位显示按键序号数字
+  28   3          weixuan(7);
+  29   3          GPIO_DIG=~smgduan[speed];   
+  30   3          delay(1);
+  31   3          }
+  32   2          
+  33   2          if(speed>=10){    //显示速度等级0-16
+  34   3          weixuan(6);
+  35   3          GPIO_DIG=~smgduan[1];   
+  36   3          delay(1);
+  37   3            
+  38   3          weixuan(7);
+  39   3          GPIO_DIG=~smgduan[speed-10];    
+  40   3          delay(1);
+  41   3          }   
+  42   2        }
+  43   1        
+  44   1          if(mode ==4){
+  45   2          int duty = (0.2 + speed/20.0)*100;  
+  46   2            
+  47   2          weixuan(0);
+  48   2          GPIO_DIG=0x5e;    //在第0位显示字母d
+  49   2          delay(1);
+  50   2          weixuan(1);
+  51   2          GPIO_DIG=0x3e;    //在第0位显示字母u
+  52   2          delay(1);
+  53   2          weixuan(2);
+  54   2          GPIO_DIG=0x78;    //在第0位显示字母t
+C51 COMPILER V9.01   DISP                                                                  01/13/2021 22:44:22 PAGE 2   
+
+  55   2          delay(1);
+  56   2          weixuan(3);
+  57   2          GPIO_DIG=0x6e;    //在第0位显示字母y
+  58   2          delay(1);
+  59   2          
+  60   2          if(duty < 100&& duty > 20){ //显示占空比
+  61   3          weixuan(6);
+  62   3          GPIO_DIG=~smgduan[(int)(duty/10)];    
+  63   3          delay(1);
+  64   3            
+  65   3          weixuan(7);
+  66   3          GPIO_DIG=~smgduan[(int)(duty%10)];    
+  67   3          delay(1); 
+  68   3          }
+  69   2          else if(duty >= 100){
+  70   3          weixuan(5);
+  71   3          GPIO_DIG=~smgduan[1];   
+  72   3          delay(1);
+  73   3            
+  74   3          weixuan(6);
+  75   3          GPIO_DIG=~smgduan[0];   
+  76   3          delay(1);
+  77   3            
+  78   3          weixuan(7);
+  79   3          GPIO_DIG=~smgduan[0];   
+  80   3          delay(1); 
+  81   3          }
+  82   2          else {
+  83   3          weixuan(4);
+  84   3          GPIO_DIG=~smgduan[5];   //在第0位显示字母s
+  85   3          delay(1);
+  86   3          weixuan(5);
+  87   3          GPIO_DIG=0x78;    //在第0位显示字母t
+  88   3          delay(1);
+  89   3          weixuan(6);
+  90   3          GPIO_DIG=0x5c;    //在第0位显示字母o
+  91   3          delay(1);
+  92   3          weixuan(7);
+  93   3          GPIO_DIG=0x73;    //在第0位显示字母p
+  94   3          delay(1);
+  95   3          }
+  96   2          
+  97   2        }
+  98   1          
+  99   1      }
+ 100          
+ 101          void weixuan(int i){
+ 102   1      switch(i)  //位选，选择点亮的数码管，
+ 103   1          {
+ 104   2            case(0):
+ 105   2              LSA=1;LSB=1;LSC=1; break;//显示第7位
+ 106   2            case(1):
+ 107   2              LSA=0;LSB=1;LSC=1; break;//显示第6位
+ 108   2            case(2):
+ 109   2              LSA=1;LSB=0;LSC=1; break;//显示第5位
+ 110   2            case(3):
+ 111   2              LSA=0;LSB=0;LSC=1; break;//显示第4位
+ 112   2            case(4):
+ 113   2              LSA=1;LSB=1;LSC=0; break;//显示第3位 
+ 114   2            case(5):
+ 115   2              LSA=0;LSB=1;LSC=0; break;//显示第2位 
+ 116   2            case(6):
+C51 COMPILER V9.01   DISP                                                                  01/13/2021 22:44:22 PAGE 3   
+
+ 117   2              LSA=1;LSB=0;LSC=0; break;//显示第1位 
+ 118   2            case(7):
+ 119   2              LSA=0;LSB=0;LSC=0; break;//显示第0位  
+ 120   2          }
+ 121   1        }
+ 122          
+ 123          void  temp_disp(){
+ 124   1        weixuan(0);
+ 125   1        GPIO_DIG=~smgduan[2];   //在第0位显示第一位
+ 126   1        delayus(1);
+ 127   1        
+ 128   1        weixuan(1);
+ 129   1        GPIO_DIG=~smgduan[3];   //在第0位显示第一位
+ 130   1        delayus(1);
+ 131   1        
+ 132   1          weixuan(3);
+ 133   1        GPIO_DIG=0xb9;    //在第0位显示第一位
+ 134   1        delayus(1);
+ 135   1        }
+ 136          
+ 137            void DigDisplay()
+ 138          {
+ 139   1        unsigned char i;
+ 140   1        for(i=0;i<6;i++)
+ 141   1        {
+ 142   2          switch(i)  //位选，选择点亮的数码管，
+ 143   2          {
+ 144   3            case(0):
+ 145   3              LSA=1;LSB=1;LSC=1; break;//显示第0位
+ 146   3            case(1):
+ 147   3              LSA=0;LSB=1;LSC=1; break;//显示第1位
+ 148   3            case(2):
+ 149   3              LSA=1;LSB=0;LSC=1; break;//显示第2位
+ 150   3            case(3):
+ 151   3              LSA=0;LSB=0;LSC=1; break;//显示第3位
+ 152   3            case(4):
+ 153   3              LSA=1;LSB=1;LSC=0; break;//显示第4位
+ 154   3            case(5):
+ 155   3              LSA=0;LSB=1;LSC=0; break;//显示第5位
+ 156   3          }
+ 157   2          P0=DisplayData[i];//发送数据
+ 158   2          delayus(10); //间隔一段时间扫描 
+ 159   2          //P0=0x00;//消隐
+ 160   2        }   
+ 161   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    841    ----
+   CONSTANT SIZE    =     17    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       3
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

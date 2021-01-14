@@ -1,0 +1,8 @@
+"main.obj",
+"disp.obj",
+"delay.obj",
+"key.obj",
+"pwm.obj",
+"UART.obj" 
+TO "final" 
+PRINT(".\Listings\final.m51") RAMSIZE(256) 

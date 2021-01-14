@@ -1,0 +1,148 @@
+C51 COMPILER V9.01   DISP                                                                  01/14/2021 09:43:13 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE DISP
+OBJECT MODULE PLACED IN disp.OBJ
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE disp.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\05大实验) DEBUG OBJECTEXTEND P
+                    -RINT(.\Listings\disp.lst) TABS(2)
+
+line level    source
+
+   1          #include "disp.h"
+   2          #include "delay.h"
+   3          
+   4          unsigned char code smgduan[17]={0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,
+   5                    0x80,0x90,0x88,0x83,0xc6,0xa1,0x86,0x8e};//显示0~F的值
+   6          
+   7          void display_smg(){
+   8   1          ////显示程序段
+   9   1          if(mode ==1){
+  10   2          weixuan(0);
+  11   2          GPIO_DIG=0x6d;    //在第0位显示字母S
+  12   2          delay(1);
+  13   2          weixuan(1);
+  14   2          GPIO_DIG=0x73;    //在第0位显示字母P
+  15   2          delay(1);
+  16   2          weixuan(2);
+  17   2          GPIO_DIG=0x79;    //在第0位显示字母E
+  18   2          delay(1);
+  19   2          weixuan(3);
+  20   2          GPIO_DIG=0x79;    //在第0位显示字母E
+  21   2          delay(1);
+  22   2          weixuan(4);
+  23   2          GPIO_DIG=~smgduan[13];    //在第0位显示字母d
+  24   2          delay(1);
+  25   2          if(speed<10){               //在小于10的时候，在第3位显示按键序号数字
+  26   3          weixuan(7);
+  27   3          GPIO_DIG=~smgduan[speed];   
+  28   3          delay(1);
+  29   3          }
+  30   2          
+  31   2          if(speed>=10){    //显示速度等级0-16
+  32   3          weixuan(6);
+  33   3          GPIO_DIG=~smgduan[1];   
+  34   3          delay(1);
+  35   3            
+  36   3          weixuan(7);
+  37   3          GPIO_DIG=~smgduan[speed-10];    
+  38   3          delay(1);
+  39   3          }   
+  40   2        }
+  41   1        
+  42   1          if(mode ==4){
+  43   2          int duty = (0.2 + speed/20.0)*100;  
+  44   2            
+  45   2          weixuan(0);
+  46   2          GPIO_DIG=0x5e;    //在第0位显示字母d
+  47   2          delay(1);
+  48   2          weixuan(1);
+  49   2          GPIO_DIG=0x3e;    //在第0位显示字母u
+  50   2          delay(1);
+  51   2          weixuan(2);
+  52   2          GPIO_DIG=0x78;    //在第0位显示字母t
+  53   2          delay(1);
+  54   2          weixuan(3);
+C51 COMPILER V9.01   DISP                                                                  01/14/2021 09:43:13 PAGE 2   
+
+  55   2          GPIO_DIG=0x6e;    //在第0位显示字母y
+  56   2          delay(1);
+  57   2          
+  58   2          if(duty < 100&& duty > 20){ //显示占空比
+  59   3          weixuan(6);
+  60   3          GPIO_DIG=~smgduan[(int)(duty/10)];    
+  61   3          delay(1);
+  62   3            
+  63   3          weixuan(7);
+  64   3          GPIO_DIG=~smgduan[(int)(duty%10)];    
+  65   3          delay(1); 
+  66   3          }
+  67   2          else if(duty >= 100){
+  68   3          weixuan(5);
+  69   3          GPIO_DIG=~smgduan[1];   
+  70   3          delay(1);
+  71   3            
+  72   3          weixuan(6);
+  73   3          GPIO_DIG=~smgduan[0];   
+  74   3          delay(1);
+  75   3            
+  76   3          weixuan(7);
+  77   3          GPIO_DIG=~smgduan[0];   
+  78   3          delay(1); 
+  79   3          }
+  80   2          else {
+  81   3          weixuan(4);
+  82   3          GPIO_DIG=~smgduan[5];   //在第0位显示字母s
+  83   3          delay(1);
+  84   3          weixuan(5);
+  85   3          GPIO_DIG=0x78;    //在第0位显示字母t
+  86   3          delay(1);
+  87   3          weixuan(6);
+  88   3          GPIO_DIG=0x5c;    //在第0位显示字母o
+  89   3          delay(1);
+  90   3          weixuan(7);
+  91   3          GPIO_DIG=0x73;    //在第0位显示字母p
+  92   3          delay(1);
+  93   3          }
+  94   2          
+  95   2        }
+  96   1          
+  97   1      }
+  98          
+  99          void weixuan(int i){
+ 100   1      switch(i)  //位选，选择点亮的数码管，
+ 101   1          {
+ 102   2            case(0):
+ 103   2              LSA=1;LSB=1;LSC=1; break;//显示第7位
+ 104   2            case(1):
+ 105   2              LSA=0;LSB=1;LSC=1; break;//显示第6位
+ 106   2            case(2):
+ 107   2              LSA=1;LSB=0;LSC=1; break;//显示第5位
+ 108   2            case(3):
+ 109   2              LSA=0;LSB=0;LSC=1; break;//显示第4位
+ 110   2            case(4):
+ 111   2              LSA=1;LSB=1;LSC=0; break;//显示第3位 
+ 112   2            case(5):
+ 113   2              LSA=0;LSB=1;LSC=0; break;//显示第2位 
+ 114   2            case(6):
+ 115   2              LSA=1;LSB=0;LSC=0; break;//显示第1位 
+ 116   2            case(7):
+C51 COMPILER V9.01   DISP                                                                  01/14/2021 09:43:13 PAGE 3   
+
+ 117   2              LSA=0;LSB=0;LSC=0; break;//显示第0位  
+ 118   2          }
+ 119   1        }
+ 120          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    691    ----
+   CONSTANT SIZE    =     17    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

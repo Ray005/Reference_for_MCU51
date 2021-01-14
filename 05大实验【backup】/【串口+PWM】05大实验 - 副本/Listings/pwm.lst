@@ -1,0 +1,72 @@
+C51 COMPILER V9.01   PWM                                                                   01/13/2021 19:02:53 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE PWM
+OBJECT MODULE PLACED IN pwm.OBJ
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE pwm.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\05大实验) DEBUG OBJECTEXTEND PR
+                    -INT(.\Listings\pwm.lst) TABS(2)
+
+line level    source
+
+   1          #include "pwm.h"
+   2          
+   3          void moto_turn(int turn){
+   4   1        if(turn == 0){
+   5   2        moto_pos = 1;
+   6   2        }
+   7   1        else {
+   8   2        moto_pos = 0;
+   9   2        }
+  10   1        
+  11   1      
+  12   1      }
+  13          unsigned int counterCul(float dutycycle){//1kHz
+  14   1        return 65535-(int)(1000*dutycycle*11.0592/12.0);//pwm周期为1000us即1ms（1kHz）
+  15   1      }
+  16          
+  17          void Timer0Init()
+  18          {
+  19   1        TMOD|=0X01;//选择为定时器0模式，工作方式1，仅用TR0打开启动。
+  20   1        TH0=0XCD; //给定时器赋初值，定时1ms
+  21   1        TL0=0XD4; 
+  22   1        ET0=1;//打开定时器0中断允许
+  23   1        EA=1;//打开总中断
+  24   1        TR0=1;//打开定时器      
+  25   1      }
+  26          
+  27          void Timer0() interrupt 1
+  28          {
+  29   1        if(speed ==0 ){
+  30   2        moto_pos = 1;
+  31   2        }
+  32   1        if(moto_pos == 0)
+  33   1          {   
+  34   2            P2 = P2 & 0x1C | 0x00;
+  35   2              moto_pos = 1;        //设置高电平持续时间
+  36   2              TH0 = TH0_ON;
+  37   2              TL0 = TL0_ON;
+  38   2          }
+  39   1          else
+  40   1          {   P2 = P2 & 0x1C | 0xE3;
+  41   2              moto_pos = 0;        //设置低电平持续时间         
+  42   2            TH0 = TH0_OFF;
+  43   2            TL0 = TL0_OFF;
+  44   2          }
+  45   1      }
+  46            
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    119    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       4
+C51 COMPILER V9.01   PWM                                                                   01/13/2021 19:02:53 PAGE 2   
+
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

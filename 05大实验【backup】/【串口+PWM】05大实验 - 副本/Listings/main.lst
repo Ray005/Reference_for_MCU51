@@ -1,0 +1,78 @@
+C51 COMPILER V9.01   MAIN                                                                  01/13/2021 23:23:35 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(..\05大实验) DEBUG OBJECTEXTEND P
+                    -RINT(.\Listings\main.lst) TABS(2)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          #include "disp.h"
+   3          #include "delay.h"
+   4          #include "key.h"
+   5          #include "pwm.h"
+   6          #include "UART.h"
+   7          
+   8          unsigned char KeyValue; //用来存放读取到的键值
+   9          unsigned char TL0_ON ,TH0_ON,TL0_OFF,TH0_OFF;//u16
+  10          unsigned char key_val;
+  11          unsigned char speed = 1,speed_old;
+  12          unsigned int  counter = 0xFFF0,counter_OFF = 0xFFF0;
+  13          unsigned char mode = 1;
+  14          unsigned char mech_step = 1;
+  15          unsigned char recv_commond = 0;
+  16          
+  17          void main(){
+  18   1        Timer0Init();
+  19   1        UartInit();
+  20   1        printf("ON");
+  21   1        
+  22   1        while(1){
+  23   2          if(recv_commond-48>=1 && recv_commond-48 <=16){//串口调速
+  24   3          speed = recv_commond-48;
+  25   3          }
+  26   2        key_val = keypros();
+  27   2          switch(key_val)
+  28   2            {case 1:mode = 1; break;
+  29   3            case 2: 
+  30   3          if(speed<16){speed++;}
+  31   3          else {speed = 16;}
+  32   3          break;
+  33   3          case 3: 
+  34   3          if(speed>=1){speed--;}
+  35   3          break;
+  36   3          case 4:mode = 4;break;
+  37   3            default :break;
+  38   3          }
+  39   2          if(speed != speed_old)
+  40   2          {
+  41   3          counter = counterCul(0.2 + speed/20.0);
+  42   3          counter_OFF = 65535- (counter - 64613);
+  43   3          TL0_ON = counter;
+  44   3          TH0_ON = counter>>8;
+  45   3          TL0_OFF = counter_OFF;
+  46   3          TH0_OFF = counter_OFF>>8;
+  47   3          speed_old = speed;
+  48   3          }
+  49   2          display_smg();
+  50   2        
+  51   2        }
+  52   1      }
+
+
+C51 COMPILER V9.01   MAIN                                                                  01/13/2021 23:23:35 PAGE 2   
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    165    ----
+   CONSTANT SIZE    =      3    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     15    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
